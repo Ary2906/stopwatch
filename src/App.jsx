@@ -4,6 +4,7 @@ import './App.css';
 function App() {
   const [time, setTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
+  const [laps, setLaps] = useState([]);
   const intervalRef = useRef(null);
 
   const startStopwatch = () => {
@@ -25,15 +26,26 @@ function App() {
   const resetStopwatch = () => {
     stopStopwatch();
     setTime(0);
+    setLaps([]);
+  };
+
+  const recordLap = () => {
+    if (!isRunning && time === 0) return;
+    const lapTime = laps.length > 0 ? time - laps[laps.length - 1].cumulativeTime : time;
+    setLaps([...laps, { lapNumber: laps.length + 1, lapTime, cumulativeTime: time }]);
   };
 
   // Convert time in milliseconds (centiseconds) to display format MM:SS.MS
-  const getDisplayTime = () => {
-    const minutes = Math.floor(time / 6000);
-    const seconds = Math.floor((time % 6000) / 100);
-    const milliseconds = time % 100;
+  const formatTime = (timeValue) => {
+    const minutes = Math.floor(timeValue / 6000);
+    const seconds = Math.floor((timeValue % 6000) / 100);
+    const milliseconds = timeValue % 100;
 
     return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(milliseconds).padStart(2, '0')}`;
+  };
+
+  const getDisplayTime = () => {
+    return formatTime(time);
   };
 
   return (
@@ -58,12 +70,33 @@ function App() {
           Stop
         </button>
         <button
+          className="btn btn-lap"
+          onClick={recordLap}
+          disabled={!isRunning && time === 0}
+        >
+          Lap
+        </button>
+        <button
           className="btn btn-reset"
           onClick={resetStopwatch}
         >
           Reset
         </button>
       </div>
+      {laps.length > 0 && (
+        <div className="laps-container">
+          <h2>Laps</h2>
+          <div className="laps-list">
+            {laps.map((lap) => (
+              <div key={lap.lapNumber} className="lap-item">
+                <span className="lap-number">Lap {lap.lapNumber}</span>
+                <span className="lap-time">{formatTime(lap.lapTime)}</span>
+                <span className="cumulative-time">Total: {formatTime(lap.cumulativeTime)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
